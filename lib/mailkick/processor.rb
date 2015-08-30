@@ -16,10 +16,12 @@ module Mailkick
       end
 
       verifier = ActiveSupport::MessageVerifier.new(Mailkick.secret_token)
+      token_without_list = verifier.generate([email, user.try(:id), user.try(:class).try(:name)])
       token = verifier.generate([email, user.try(:id), user.try(:class).try(:name), list])
 
       parts = message.parts.any? ? message.parts : [message]
       parts.each do |part|
+        part.body.raw_source.gsub!(/%7B%7BMAILKICK_TOKEN_WITHOUT_LIST%7D%7D/, CGI.escape(token_without_list))
         part.body.raw_source.gsub!(/%7B%7BMAILKICK_TOKEN%7D%7D/, CGI.escape(token))
       end
     end
